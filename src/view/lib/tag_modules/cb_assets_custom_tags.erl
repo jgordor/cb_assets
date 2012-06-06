@@ -25,14 +25,4 @@ img_tag(Variables, Options) ->
 %% {% javascript_include_set_tag set="application.js" %}
 %% uses the boss.config => cb_assets->javascripts->sets[name]
 javascript_include_set_tag(Variables, Options) ->
-	Set = binary_to_list(proplists:get_value(set, Variables)),
-	App = proplists:get_value(application, Options),
-	io:format("rumbera app=~n~p~n", [App]),
-	case boss_env:get_env(list_to_atom(App), cb_assets_conf_stylesheets_sets, undefined) of
-		undefined -> "<!-- Please configure the js sets -->";
-		Sets -> io:format("rumbera sets=~n~p~n", [Sets])
-	end,
-			
-			
-
-	"sdf".
+	cb_assets_helper:javascript_include_set_tag(Variables, Options).

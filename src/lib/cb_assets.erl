@@ -64,26 +64,46 @@ initialize() ->
 					  case proplists:get_value(cb_assets, AppConf) of
 						  undefined -> skyp;
 						  AssetsConf -> 
+							  %% General
 							  application:set_env(AppName, cb_assets_conf, AssetsConf),
+							  %% Js
 							  JConf = get_conf_value(javascripts, AssetsConf),
-							  io:format("rumbera Assetsconf~n~p~n", [AssetsConf]),
-							  io:format("rumbera JConf~n~p~n", [JConf]),
-							  io:format("rumbera sets~n~p~n", [get_conf_value(sets, JConf)]),
 							  application:set_env(AppName, cb_assets_conf_javascripts, JConf),
+							  JSets = get_conf_value(sets, JConf),
 							  application:set_env(AppName, 
 												  cb_assets_conf_javascripts_sets, 
-												  get_conf_value(sets, JConf)),
+												  JSets),
+							  lists:map(fun(Set) ->
+												{SName, SPath, SFiles} = Set,
+												application:set_env(AppName,
+																	list_to_atom("cb_assets_conf_javascripts_set_" ++ SName),
+																	[SPath, SFiles])
+										end, get_info_from_sets(JSets)),
+							  %% Css
 							  CConf = get_conf_value(stylesheets, AssetsConf), 
 							  application:set_env(AppName, cb_assets_conf_stylesheets, CConf),
+							  CSets = get_conf_value(sets, CConf),
 							  application:set_env(AppName, 
 												  cb_assets_conf_stylesheets_sets, 
-												  get_conf_value(sets, CConf))
+												  CSets),
+							  lists:map(fun(Set) ->
+												{SName, SPath, SFiles} = Set,
+												application:set_env(AppName,
+																	list_to_atom("cb_assets_conf_stylesheets_set_" ++ SName),
+																	[SPath, SFiles])
+										end, get_info_from_sets(CSets))
 					  end
 			  end, boss_config()),
-	io:format("==> cb_assets - [OK] - initialization done~n").
+	io:format("==> cb_assets - [OK] - initialization done in ~s mode~n", [atom_to_list(boss_env:boss_env())]).
 
 %% Private
 
+get_info_from_sets(Sets) when Sets =:= undefined ->
+	[];
+get_info_from_sets(Sets) ->
+	[{proplists:get_value(name, S), proplists:get_value(path, S), proplists:get_value(files, S)} || S <- Sets].
+	
+  
 gen_timestamp(App) ->
 	Path = Conf = boss_env:get_env(App, path, "."),
 	file:write_file(Path ++ "/priv/cb_assets.timestamp", io_lib:fwrite("~s", [integer_to_list(get_timestamp())])).
