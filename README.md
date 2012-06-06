@@ -12,3 +12,10 @@ Extract and compile:
 copy to:
 
 * priv/yuicompressor/yuicompressor-2.4.7.jar
+
+
+## Setup
+
+Include the tag_module in your boss.config:
+
+{template_tag_modules, [cb_assets_custom_tags]}

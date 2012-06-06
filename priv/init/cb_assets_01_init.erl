@@ -3,8 +3,8 @@
 -export([init/0, stop/1]).
 
 init() ->
-	io:format("==> cb_assets - initializing timestamps...~n"),
-	cb_assets:initialize_timestamps(),
+	io:format("==> cb_assets - initializing...~n"),
+	cb_assets:initialize(),
     {ok, []}.
 
 stop(ListOfWatchIDs) ->

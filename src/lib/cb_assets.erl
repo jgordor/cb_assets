@@ -9,7 +9,7 @@
 %%%-------------------------------------------------------------------
 -module(cb_assets).
 -export([combine_and_minify/1,
-		 initialize_timestamps/0
+		 initialize/0
 		]).
 -define(YUI_VER, "2.4.7").
 -define(BOSS_CONFIG_FILE, "boss.config").
@@ -53,15 +53,34 @@ combine_set([Set|Rest]) ->
     os:cmd("java -jar " ++ PAssetPath ++ "/priv/yuicompressor/yuicompressor-" ++ ?YUI_VER ++ ".jar " ++ Combined ++ " -o " ++ Combined).
 
 
-initialize_timestamps() ->
+initialize() ->
 	lists:map(fun(App) ->
 					  {AppName, AppConf} = App,
 					  Path = proplists:get_value(path, AppConf),
 					  case get_timestamp_content(Path ++ "/priv/cb_assets.timestamp") of
 						  undefined -> skyp;
 						  T -> application:set_env(AppName, cb_assets_timestamp, T)
+					  end,
+					  case proplists:get_value(cb_assets, AppConf) of
+						  undefined -> skyp;
+						  AssetsConf -> 
+							  application:set_env(AppName, cb_assets_conf, AssetsConf),
+							  JConf = get_conf_value(javascripts, AssetsConf),
+							  io:format("rumbera Assetsconf~n~p~n", [AssetsConf]),
+							  io:format("rumbera JConf~n~p~n", [JConf]),
+							  io:format("rumbera sets~n~p~n", [get_conf_value(sets, JConf)]),
+							  application:set_env(AppName, cb_assets_conf_javascripts, JConf),
+							  application:set_env(AppName, 
+												  cb_assets_conf_javascripts_sets, 
+												  get_conf_value(sets, JConf)),
+							  CConf = get_conf_value(stylesheets, AssetsConf), 
+							  application:set_env(AppName, cb_assets_conf_stylesheets, CConf),
+							  application:set_env(AppName, 
+												  cb_assets_conf_stylesheets_sets, 
+												  get_conf_value(sets, CConf))
 					  end
-			  end, boss_config()).
+			  end, boss_config()),
+	io:format("==> cb_assets - [OK] - initialization done~n").
 
 %% Private
 
@@ -91,3 +110,13 @@ get_timestamp_content(File) ->
 			file:close(Dev),
 			T
 	end.
+
+get_conf_value(Val, Conf) when Conf =:= undefined ->
+	undefined;
+get_conf_value(Val, Conf) ->
+	proplists:get_value(Val, Conf).
+
+%%                 case boss_env:is_developing_app(AppName) of
+%%                     true -> boss_load:load_all_modules(AppName, TranslatorSupPid);
+%%                     false -> ok
+%%                 end,
