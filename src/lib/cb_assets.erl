@@ -13,9 +13,11 @@
 		]).
 -define(YUI_VER, "2.4.7").
 -define(BOSS_CONFIG_FILE, "boss.config").
+-define(ASSETS_CONFIG_FILE, "priv/cb_assets.config").
 
 combine_and_minify(App) ->
-    Conf = boss_env:get_env(App, cb_assets, undefined),
+    AppPath = boss_env:get_env(App, path, undefined),
+    Conf = assets_config(AppPath),
     JConf = case lists:keyfind(javascripts, 1, Conf) of
         false -> [];
         {javascripts, JC} -> JC
@@ -50,8 +52,8 @@ combine_set([Set|Rest]) ->
     Combined = "priv" ++ Path ++ "/" ++ Name,
     os:cmd("if [ -e " ++ Combined ++ " ]; then rm " ++ Combined ++ "; fi"),
     os:cmd("cat " ++ string:join(Files, " ") ++ " > " ++ Combined),
-    os:cmd("java -jar " ++ PAssetPath ++ "/priv/yuicompressor/yuicompressor-" ++ ?YUI_VER ++ ".jar " ++ Combined ++ " -o " ++ Combined).
-
+    os:cmd("java -jar " ++ PAssetPath ++ "/priv/yuicompressor/yuicompressor-" ++ ?YUI_VER ++ ".jar " ++ Combined ++ " -o " ++ Combined),
+    combine_set(Rest).
 
 initialize() ->
 	lists:map(fun(App) ->
@@ -61,7 +63,7 @@ initialize() ->
 						  undefined -> skyp;
 						  T -> application:set_env(AppName, cb_assets_timestamp, T)
 					  end,
-					  case proplists:get_value(cb_assets, AppConf) of
+					  case assets_config(Path) of
 						  undefined -> skyp;
 						  AssetsConf -> 
 							  %% General
@@ -119,6 +121,14 @@ boss_config() ->
             halt(1);
         {ok, [BossConfig]} ->
             BossConfig
+    end.
+
+assets_config(Path) ->
+    case file:consult(Path ++ "/" ++ ?ASSETS_CONFIG_FILE) of
+        {error,enoent} ->
+            undefined;
+        {ok, [AssetsConfig]} ->
+            AssetsConfig
     end.
 
 get_timestamp_content(File) ->

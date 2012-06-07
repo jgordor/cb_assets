@@ -1,6 +1,7 @@
 -module(cb_assets_custom_tags).
 -export([img_tag/2,
-		 javascript_include_set_tag/2
+		 javascript_include_set_tag/2,
+         stylesheet_include_set_tag/2
 		]).
 
 % put custom tags in here, e.g.
@@ -14,15 +15,12 @@
 
 %% {% img_tag src="/static/images/img.jpg" %}
 img_tag(Variables, Options) ->
-	App = proplists:get_value(application, Options),
-	Src = binary_to_list(proplists:get_value(src, Variables)),
-	Ts = case boss_env:get_env(list_to_atom(App), cb_assets_timestamp, undefined) of
-			 undefined -> "";
-			 CTs -> "?" ++ CTs
-		 end,
-	"<img src=\"" ++ Src ++ Ts ++ "\" />".
+    cb_assets_helper:img_tag(Variables, Options).
 
 %% {% javascript_include_set_tag set="application.js" %}
-%% uses the boss.config => cb_assets->javascripts->sets[name]
 javascript_include_set_tag(Variables, Options) ->
 	cb_assets_helper:javascript_include_set_tag(Variables, Options).
+
+%% {% stylesheet_include_set_tag set="application.css" %}
+stylesheet_include_set_tag(Variables, Options) ->
+    cb_assets_helper:stylesheet_include_set_tag(Variables, Options).
