@@ -51,8 +51,6 @@ img_tag(Variables, Options) ->
 
 %% Private
 
-get_var(Var, Variables) when is_atom(Var) ->
-    get_var(atom_to_list(Var), Variables);
 get_var(Var, Variables) ->
 	binary_to_list(proplists:get_value(Var, Variables)).
 
