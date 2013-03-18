@@ -26,13 +26,13 @@ combine_and_minify(App) ->
         false -> [];
         {stylesheets, CC} -> CC
     end,
-    io:format("==> cb_assets - combine and minify js...~n"),
+    lager:info("==> cb_assets - combine and minify js...~n"),
     combine(JConf),
-    io:format("==> cb_assets - combine and minify css...~n"),
+    lager:info("==> cb_assets - combine and minify css...~n"),
     combine(CConf),
-	io:format("==> cb_assets - generating new timestamp...~n"),
+	lager:info("==> cb_assets - generating new timestamp...~n"),
 	gen_timestamp(App),
-	io:format("==> cb_assets - done~n").
+	lager:info("==> cb_assets - done~n").
 
 combine(Conf) ->
     Sets = proplists:get_value(sets, Conf),
@@ -58,45 +58,49 @@ combine_set([Set|Rest]) ->
 initialize() ->
 	lists:map(fun(App) ->
 					  {AppName, AppConf} = App,
-					  Path = proplists:get_value(path, AppConf),
-					  case get_timestamp_content(Path ++ "/priv/cb_assets.timestamp") of
-						  undefined -> skyp;
-						  T -> application:set_env(AppName, cb_assets_timestamp, T)
-					  end,
-					  case assets_config(Path) of
-						  undefined -> skyp;
-						  AssetsConf -> 
-							  %% General
-							  application:set_env(AppName, cb_assets_conf, AssetsConf),
-							  %% Js
-							  JConf = get_conf_value(javascripts, AssetsConf),
-							  application:set_env(AppName, cb_assets_conf_javascripts, JConf),
-							  JSets = get_conf_value(sets, JConf),
-							  application:set_env(AppName, 
-												  cb_assets_conf_javascripts_sets, 
-												  JSets),
-							  lists:map(fun(Set) ->
-												{SName, SPath, SFiles} = Set,
-												application:set_env(AppName,
-																	list_to_atom("cb_assets_conf_javascripts_set_" ++ SName),
-																	[SPath, SFiles])
-										end, get_info_from_sets(JSets)),
-							  %% Css
-							  CConf = get_conf_value(stylesheets, AssetsConf), 
-							  application:set_env(AppName, cb_assets_conf_stylesheets, CConf),
-							  CSets = get_conf_value(sets, CConf),
-							  application:set_env(AppName, 
-												  cb_assets_conf_stylesheets_sets, 
-												  CSets),
-							  lists:map(fun(Set) ->
-												{SName, SPath, SFiles} = Set,
-												application:set_env(AppName,
-																	list_to_atom("cb_assets_conf_stylesheets_set_" ++ SName),
-																	[SPath, SFiles])
-										end, get_info_from_sets(CSets))
-					  end
-			  end, boss_config()),
-	io:format("==> cb_assets - [OK] - initialization done in ~s mode~n", [atom_to_list(boss_env:boss_env())]).
+					  case proplists:get_value(path, AppConf) of
+                          undefined ->
+                              skyp;
+                          Path ->
+        					  case get_timestamp_content(Path ++ "/priv/cb_assets.timestamp") of
+        						  undefined -> skyp;
+        						  T -> application:set_env(AppName, cb_assets_timestamp, T)
+        					  end,
+        					  case assets_config(Path) of
+        						  undefined -> skyp;
+        						  AssetsConf -> 
+        							  %% General
+        							  application:set_env(AppName, cb_assets_conf, AssetsConf),
+        							  %% Js
+        							  JConf = get_conf_value(javascripts, AssetsConf),
+        							  application:set_env(AppName, cb_assets_conf_javascripts, JConf),
+        							  JSets = get_conf_value(sets, JConf),
+        							  application:set_env(AppName, 
+        												  cb_assets_conf_javascripts_sets, 
+        												  JSets),
+        							  lists:map(fun(Set) ->
+        												{SName, SPath, SFiles} = Set,
+        												application:set_env(AppName,
+        																	list_to_atom("cb_assets_conf_javascripts_set_" ++ SName),
+        																	[SPath, SFiles])
+        										end, get_info_from_sets(JSets)),
+        							  %% Css
+        							  CConf = get_conf_value(stylesheets, AssetsConf), 
+        							  application:set_env(AppName, cb_assets_conf_stylesheets, CConf),
+        							  CSets = get_conf_value(sets, CConf),
+        							  application:set_env(AppName, 
+        												  cb_assets_conf_stylesheets_sets, 
+        												  CSets),
+        							  lists:map(fun(Set) ->
+        												{SName, SPath, SFiles} = Set,
+        												application:set_env(AppName,
+        																	list_to_atom("cb_assets_conf_stylesheets_set_" ++ SName),
+        																	[SPath, SFiles])
+        										end, get_info_from_sets(CSets))
+        					  end
+                      end
+              end, boss_config()),
+	lager:info("==> cb_assets - [OK] - initialization done in ~s mode~n", [atom_to_list(boss_env:boss_env())]).
 
 %% Private
 
@@ -117,7 +121,7 @@ get_timestamp() ->
 boss_config() ->
     case file:consult(?BOSS_CONFIG_FILE) of
         {error,enoent} ->
-            io:format("FATAL: cb_assets - Config file ~p not found.~n", [?BOSS_CONFIG_FILE]),
+            lager:error("FATAL: cb_assets - Config file ~p not found.~n", [?BOSS_CONFIG_FILE]),
             halt(1);
         {ok, [BossConfig]} ->
             BossConfig
