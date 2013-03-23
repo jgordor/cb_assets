@@ -100,7 +100,7 @@ initialize() ->
         					  end
                       end
               end, boss_config()),
-	lager:info("==> cb_assets - [OK] - initialization done in ~s mode~n", [atom_to_list(boss_env:boss_env())]).
+	error_logger:info_msg("==> cb_assets - [OK] - initialization done in ~s mode", [atom_to_list(boss_env:boss_env())]).
 
 %% Private
 
